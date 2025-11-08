@@ -144,7 +144,8 @@ async def resolve_fixture(state: State, runtime: Runtime[Context]) -> Dict[str, 
 
     if not match_id:
         guidance = (
-            "当前请求缺少比赛编号，请在页面提供的比赛列表中选择一场比赛后再试。"
+            "为了查到准确的比赛数据，我需要先知道比赛编号（9-10 位 match_id 或 fixture_id）。"
+            "请从页面列表里点选目标比赛，或直接把 match_id/fixture_id 告诉我，我才能继续查询。"
         )
         return {
             "fixture_id": None,
@@ -374,7 +375,13 @@ async def call_model(state: State, runtime: Runtime[Context]) -> Dict[str, Any]:
     )
 
     messages = [
-        SystemMessage(content="You are a helpful assistant."),
+        SystemMessage(
+            content=(
+                "你是一名足球数据助手。上游节点已经获取了 API-Football JSON，"
+                "必须依据提供的摘要或上下文回答，除非明确缺少字段，否则不得说无法查询。"
+                "如数据不足，请精确说明缺失项并提示用户补充。"
+            )
+        ),
         HumanMessage(
             content=(
                 f"当前用户消息: {message!r}. "
@@ -382,7 +389,9 @@ async def call_model(state: State, runtime: Runtime[Context]) -> Dict[str, Any]:
                 f"比赛数据摘要: {_summarize_fixture(state.fixture_payload)}. "
                 f"意图: {state.intent!r}. "
                 f"查询计划: {plan_summary}. "
-                f"可配置参数: {configurable_value!r}."
+                f"可配置参数: {configurable_value!r}. "
+                "请基于上述比赛数据输出关键信息（如赛事、时间、球场、状态等），"
+                "不得再次声称无法访问数据。若确有缺项，请说明缺少哪些字段。"
             )
         ),
     ]

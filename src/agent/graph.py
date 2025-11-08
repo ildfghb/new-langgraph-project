@@ -749,7 +749,7 @@ def _extract_match_id(text: str) -> Optional[str]:
     if not text:
         return None
 
-    match = re.search(r"\b(\d{9,10})\b", text)
+    match = re.search(r"(?<!\d)(\d{9,10})(?!\d)", text)
     return match.group(1) if match else None
 
 

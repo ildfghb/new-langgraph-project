@@ -56,6 +56,7 @@ class State:
     fixture_payload_ref: Optional[str] = None
     intent: Optional[str] = None
     query_plan: Optional[List[Dict[str, Any]]] = None
+    messages: Optional[List[Dict[str, Any]]] = None
 
 
 SUPPORTED_DATA_SUMMARY = (
@@ -754,7 +755,22 @@ def _extract_match_id(text: str) -> Optional[str]:
 
 def _resolve_user_message(state: State) -> str:
     """Return the primary user message from state inputs."""
-    return state.user_message or state.changeme or ""
+    if state.user_message:
+        return state.user_message
+
+    messages = state.messages
+    if isinstance(messages, list):
+        for entry in reversed(messages):
+            if not isinstance(entry, dict):
+                continue
+            entry_type = entry.get("type") or entry.get("role")
+            if entry_type not in {"human", "user"}:
+                continue
+            text = _render_content(entry.get("content"))
+            if text and text != "None":
+                return text
+
+    return state.changeme or ""
 
 
 # Define the graph
